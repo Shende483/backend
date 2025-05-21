@@ -37,7 +37,7 @@ export class PaymentDetailsController {
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    console.log('Received Body:', body);
+    console.log('create reqfor apymnetdy:', body);
     console.log('User from Token:', req['user']);
 
     const { userId, email , mobile } = req['user'];

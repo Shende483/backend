@@ -37,14 +37,15 @@ export class BrokerAccountController {
         success: false,
       });
     }
-
-    // Add the userId from the token to the DTO
     const updatedDto = { ...brokeraccountdto, userId };
     console.log('updatedDto', updatedDto);
     await this.brokerAccService.createBrokerAccount(updatedDto, res);
     return { message: 'Broker Account created successfully.' };
   }
 
+
+
+//get brokers list for user
   @Get('broker-details')
   @UseGuards(JwtAuthGuard)
   async getBrokerDetails(
@@ -52,7 +53,7 @@ export class BrokerAccountController {
     @Req() req: Request,
   ) {
     const { userId } = req['user'];
-
+   console.log('marketTypeId', marketTypeId);
     if (!userId) {
       return {
         statusCode: 401,
@@ -74,27 +75,105 @@ export class BrokerAccountController {
     };
   }
 
-  @Get('trading-rules/:id')
-  @UseGuards(JwtAuthGuard)
-  async getTradingRulesById(@Param('id') id: string, @Req() req: Request) {
-    const { userId } = req['user'];
 
+
+
+ // Updated endpoint for sub-brokers (POST with body)
+  @Post('sub-broker-details')
+  @UseGuards(JwtAuthGuard)
+  async getSubBrokerDetails(
+    @Body() body: { marketTypeId: string; brokerId: string },
+    @Req() req: Request,
+  ) {
+    console.log('Received request for sub-broker details:', body);
+    const { userId } = req['user'];
+    const { marketTypeId, brokerId } = body;
+    console.log('Parameters:', { userId, marketTypeId, brokerId });
     if (!userId) {
       return {
         statusCode: 401,
-        message: 'User Not Signed In',
+        message: 'User not signed in',
+        success: false,
+      };
+    }
+    try {
+      const subBrokers =
+        await this.brokerAccService.getSubBrokerDetailsByMarketTypeAndBrokerId(
+          userId,
+          marketTypeId,
+          brokerId,
+        );
+      return {
+        statusCode: 200,
+        message: 'Sub-broker details retrieved successfully',
+        success: true,
+        data: subBrokers,
+      };
+    } catch (error) {
+      return {
+        statusCode: 400,
+        message: error.message || 'Failed to retrieve sub-broker details',
+        success: false,
+      };
+    }
+  }
+
+
+
+
+  @Post('trading-rules')
+  @UseGuards(JwtAuthGuard)
+  async getTradingRules(
+    @Body() body: {  subBrokerId: string; tradingType: string },
+    @Req() req: Request,
+  ) {
+    const { userId } = req['user'];
+    const {  subBrokerId, tradingType } = body;
+console.log('Received request for trading rules:', body);
+    console.log('Parameters:', { userId, subBrokerId, tradingType });
+
+    if (!userId) {
+      return{
+        statusCode: 401,
+        message: 'User not signed in',
         success: false,
       };
     }
 
-    const tradingRules =
-      await this.brokerAccService.getTradingRulesByBrokerAccountId(id, userId);
+    if ( !subBrokerId || !tradingType) {
+      return {
+        statusCode: 400,
+        message: 'Missing required parameters',
+        success: false,
+      };
+    }
 
-    return {
-      statusCode: 200,
-      message: 'Trading rules retrieved successfully',
-      success: true,
-      data: tradingRules,
-    };
+    try {
+      const tradingRules = await this.brokerAccService.getTradingRules(
+        userId,
+        subBrokerId,
+        tradingType,
+      );
+console.log('Trading rules:', tradingRules);
+ return {
+        statusCode: 200,
+        message: 'Trading rules retrieved successfully',
+        success: true,
+        data: tradingRules,
+      };
+      
+    } catch (error) {
+      return {
+        statusCode: 400,
+        message: error.message || 'Failed to retrieve sub-broker details',
+        success: false,
+      };
+
+    } 
   }
+
+
+
+
+
 }

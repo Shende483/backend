@@ -37,6 +37,7 @@ export class SubscriptionService {
     });
 
     if (existingSubscription) {
+      console.log(`🟠 Plan ${existingSubscription.planName} already exists for this user.`);
       return res.status(400).json({
         statusCode: 400,
         message: `Plan ${existingSubscription.planName} already exists for this user. Try a different name.`,

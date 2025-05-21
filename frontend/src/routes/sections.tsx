@@ -1,22 +1,21 @@
 import { lazy, Suspense } from 'react';
-import { Outlet, Navigate, useRoutes } from 'react-router-dom';
+import { Outlet, useRoutes } from 'react-router-dom';
 
 import Box from '@mui/material/Box';
 import LinearProgress, { linearProgressClasses } from '@mui/material/LinearProgress';
 
 import { varAlpha } from '../theme/styles';
-import { DashboardLayout } from '../layouts/dashboard';
+import { DashboardLayout } from '../pages/layouts/dashboard';
 
-export const HomePage = lazy(() => import('../pages/home'));
-export const BlogPage = lazy(() => import('../pages/blog'));
-export const SubscriptionPage = lazy(() => import('../sections/broker/SubscriptionPage'));
-export const SignInPage = lazy(() => import('../pages/sign-in'));
-export const SignUpPage = lazy(() => import('../pages/sign-up'));
-export const ProfileUpdate = lazy(() => import('../pages/profile-update'));
-export const ForgetPassword = lazy(() => import('../pages/forget-password'));
-export const ProductsPage = lazy(() => import('../pages/products'));
-export const Page404 = lazy(() => import('../pages/page-not-found'));
-export const ConnectBrokerPage = lazy(() => import('../sections/broker/ConnectBrokerPage'));
+export const HomePage = lazy(() => import('../pages/layouts/dashboard/sections/section-dashboard/view/home'));
+export const BlogPage = lazy(() => import('../pages/layouts/dashboard/sections/blog/view/blog'));
+export const SubscriptionPage = lazy(() => import('../pages/layouts/dashboard/sections/broker/SubscriptionPage'));
+export const SignInPage = lazy(() => import('../pages/layouts/auth/sign-in'));
+export const SignUpPage = lazy(() => import('../pages/layouts/auth/sign-up'));
+export const ProfileUpdate = lazy(() => import('../pages/layouts/auth/profile-update'));
+export const ForgetPassword = lazy(() => import('../pages/layouts/auth/forget-password'));
+export const ProductsPage = lazy(() => import('../pages/layouts/dashboard/sections/product/products'));
+export const ConnectBrokerPage = lazy(() => import('../pages/layouts/dashboard/sections/broker/ConnectBrokerPage'));
 export const MarketTypeDetails = lazy(
   () => import('../Admin/component/marketType/MarketTypeDetails')
 );
@@ -77,13 +76,6 @@ export function Router() {
       path: '/forget-password',
       element: <ForgetPassword />,
     },
-    {
-      path: '404',
-      element: <Page404 />,
-    },
-    {
-      path: '*',
-      element: <Navigate to="/404" replace />,
-    },
+
   ]);
 }

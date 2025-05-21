@@ -22,60 +22,93 @@ export class PaymentService {
       key_secret: 'mA4npg5V8wDTDNxROfyalPMP', // Replace with your Razorpay Secret Key
     });
   }
-
-  async initiatePayment(
-    details: {
-      userId: string;
-      subscriptionId: string;
-      amount: number;
-      currency: string;
-      paymentMethod: string;
-      email: string;
-      mobile:string;
-    },
-    res: Response,
-  ) {
-
-
-  //  console.log('✅ uuid transction id Created:', details.transactionId);
-
-    try {
-      const options = {
-        amount: details.amount, // Amount should already be in paise
-        currency: details.currency,
-      //  receipt: details.transactionId,
-        payment_capture: 1,
-      };
-
-      const order = await this.razorpay.orders.create(options);
-      console.log('✅ Razorpay Order Created:', order);
-
-
-
-      const razorpayStatus = await this.razorpay.orders.fetchPayments(order.id)
-
-
-      return res.status(200).json({
-        statusCode: 200,
-        message: 'Payment initiation successful',
-        success: true,
-        orderId: order.id,
-        amount: order.amount,
-        currency: order.currency,
-        subscriptionId: details.subscriptionId,
-        email:details.email,
-        mobile:details.mobile // ✅ Taken from details
-      });
-    } catch (error) {
-      console.error('❌ Error creating Razorpay order:', error);
-      return res.status(500).json({
-        statusCode: 500,
-        message: `Error creating payment order due to ,${error}`,
+async initiatePayment(
+  details: {
+    userId: string;
+    subscriptionId: string;
+    amount: number;
+    currency: string;
+    paymentMethod: string;
+    email: string;
+    mobile: string;
+  },
+  res: Response,
+) {
+  try {
+    // Validate required fields
+    if (!details.amount || !details.currency || !details.subscriptionId) {
+      return res.status(400).json({
+        statusCode: 400,
+        message: 'Missing required fields (amount, currency, or subscriptionId)',
         success: false,
-        error: error.message,
       });
     }
+
+    // Convert amount to paise if needed (Razorpay expects amount in smallest currency unit)
+    const amountInPaise = details.currency.toLowerCase() === 'inr' 
+      ? details.amount 
+      : details.amount;
+
+    const options = {
+      amount: amountInPaise,
+      currency: details.currency,
+      payment_capture: 1,
+      notes: {
+        userId: details.userId,
+        subscriptionId: details.subscriptionId,
+        paymentMethod: details.paymentMethod,
+      },
+    };
+
+    // Create Razorpay order
+    const order = await this.razorpay.orders.create(options);
+    
+    // Prepare response data
+    const responseData = {
+      statusCode: 200,
+      message: 'Payment initiation successful',
+      success: true,
+      data: {
+        orderId: order.id,
+        amount: order.amount, // This will be in paise
+        currency: order.currency,
+        subscriptionId: details.subscriptionId,
+        email: details.email,
+        mobile: details.mobile,
+        createdAt: order.created_at,
+        status: order.status,
+      }
+    };
+
+    console.log('✅ Razorpay Order Created:', responseData);
+    return res.status(200).json(responseData);
+
+  } catch (error: any) {
+    console.error('❌ Error creating Razorpay order:', error);
+    
+    let statusCode = 500;
+    let errorMessage = 'Error creating payment order';
+    
+    if (error.error && error.error.description) {
+      // Razorpay specific error
+      errorMessage = error.error.description;
+      statusCode = 400;
+    } else if (error.message) {
+      // Generic error
+      errorMessage = error.message;
+    }
+
+    return res.status(statusCode).json({
+      statusCode,
+      message: errorMessage,
+      success: false,
+      error: {
+        name: error.name || 'PaymentError',
+        details: error.error || null,
+      },
+    });
   }
+}
 
 
   
