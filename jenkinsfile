@@ -1,0 +1,57 @@
+pipeline {
+  agent any
+
+  environment {
+    FRONTEND_DIR = '/path/to/your/frontend'  // Replace with full path to Vite app
+    BACKEND_DIR = '/path/to/your/backend'    // Replace with full path to NestJS app
+    FRONTEND_PORT = '3030'
+    BACKEND_PORT = '3040'
+  }
+
+  stages {
+    stage('Build Frontend') {
+      steps {
+        dir("${env.FRONTEND_DIR}") {
+          sh '''
+            echo "➡️ Installing frontend dependencies"
+            yarn install
+
+            echo "🛠️ Building frontend"
+            yarn build
+
+            echo "♻️ Restarting frontend with PM2"
+            pm2 delete frontend || true
+            pm2 start "npx serve -s dist -l $FRONTEND_PORT" --name frontend
+          '''
+        }
+      }
+    }
+
+    stage('Build Backend') {
+      steps {
+        dir("${env.BACKEND_DIR}") {
+          sh '''
+            echo "➡️ Installing backend dependencies"
+            yarn install
+
+            echo "🛠️ Building backend"
+            yarn build
+
+            echo "♻️ Restarting backend with PM2"
+            pm2 delete backend || true
+            pm2 start dist/main.js --name backend
+          '''
+        }
+      }
+    }
+  }
+
+  post {
+    success {
+      echo '✅ Local deployment complete!'
+    }
+    failure {
+      echo '❌ Something went wrong.'
+    }
+  }
+}
